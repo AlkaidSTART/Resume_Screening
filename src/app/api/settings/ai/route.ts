@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAiSettings, createOrUpdateAiSettings } from '@/lib/db/queries';
+import { getCurrentUser } from '@/lib/auth';
 
 /**
  * @swagger
@@ -70,6 +71,10 @@ import { getAiSettings, createOrUpdateAiSettings } from '@/lib/db/queries';
  */
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: '请先登录' }, { status: 401 });
+    }
     const settings = await getAiSettings();
     return NextResponse.json(settings);
   } catch (error) {
@@ -80,6 +85,10 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: '请先登录' }, { status: 401 });
+    }
     const data = await request.json();
     await createOrUpdateAiSettings(data);
     return NextResponse.json({ success: true });

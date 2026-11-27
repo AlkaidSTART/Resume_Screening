@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getApiKeys, replaceApiKeys } from '@/lib/db/queries';
+import { getCurrentUser } from '@/lib/auth';
 
 /**
  * @swagger
@@ -72,6 +73,10 @@ import { getApiKeys, replaceApiKeys } from '@/lib/db/queries';
  */
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: '请先登录' }, { status: 401 });
+    }
     const keys = await getApiKeys();
     return NextResponse.json(keys);
   } catch (error) {
@@ -82,6 +87,10 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: '请先登录' }, { status: 401 });
+    }
     const data = await request.json();
     await replaceApiKeys(data);
     return NextResponse.json({ success: true });
