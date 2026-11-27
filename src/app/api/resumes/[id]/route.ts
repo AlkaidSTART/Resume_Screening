@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getStudentById, updateStudent, getUserById, createActivityLog } from '@/lib/db/queries';
 import { getCurrentUser } from '@/lib/auth';
+import { isSafeResumePath } from '@/lib/resume-file';
 
 /**
  * @swagger
@@ -205,7 +206,15 @@ export async function PATCH(
     if (tags !== undefined) updateData.tags = tags;
     if (aiScore !== undefined) updateData.aiScore = aiScore.toString();
     if (notes !== undefined) updateData.notes = notes;
-    if (resumePdf !== undefined) updateData.resumePdf = resumePdf;
+    if (resumePdf !== undefined) {
+      if (resumePdf !== '' && !isSafeResumePath(resumePdf)) {
+        return NextResponse.json(
+          { success: false, message: '无效的简历文件路径' },
+          { status: 400 }
+        );
+      }
+      updateData.resumePdf = resumePdf;
+    }
     if (name !== undefined) updateData.name = name;
     if (sId !== undefined) updateData.studentId = sId;
     if (department !== undefined) updateData.department = department;

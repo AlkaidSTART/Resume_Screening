@@ -8,6 +8,7 @@ import { join } from 'path';
 import { ImapFlow } from 'imapflow';
 import { getSettings } from '@/lib/settings-store';
 import { analyzeResumeFromBuffer } from '@/lib/ai/dashscope';
+import { isSafeResumePath } from '@/lib/resume-file';
 
 // 简历文件上传目录
 const RESUME_DIR = 'public/uploads/resumes';
@@ -443,6 +444,13 @@ export async function POST(request: Request) {
     } catch {}
 
     for (const student of students) {
+      if (student.resumePdf && !isSafeResumePath(student.resumePdf)) {
+        return NextResponse.json(
+          { success: false, message: '无效的简历文件路径' },
+          { status: 400 }
+        );
+      }
+
       let finalResumePath = resumePdfPath || student.resumePdf || '';
 
       if (uploadAiResult) {

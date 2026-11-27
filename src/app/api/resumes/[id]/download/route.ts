@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getStudentById } from '@/lib/db/queries';
 import { getCurrentUser } from '@/lib/auth';
+import { getResumeContentType, resolveSafeResumeFilePath } from '@/lib/resume-file';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -42,17 +43,33 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         { status: 404 }
       );
     }
-    const relativePath = student.resumePdf.startsWith('/')
-      ? student.resumePdf.slice(1)
-      : student.resumePdf;
-    const absolutePath = path.join(process.cwd(), 'public', relativePath);
+
+    const absolutePath = resolveSafeResumeFilePath(student.resumePdf);
+    if (!absolutePath) {
+      return NextResponse.json(
+        { success: false, message: '无效的简历文件路径' },
+        { status: 400 }
+      );
+    }
+
+    try {
+      await fs.access(absolutePath);
+    } catch {
+      return NextResponse.json(
+        { success: false, message: '简历文件不存在' },
+        { status: 404 }
+      );
+    }
+
     const fileBuffer = await fs.readFile(absolutePath);
+    const ext = path.extname(absolutePath).toLowerCase();
+    const contentType = getResumeContentType(absolutePath);
 
     // 返回正确的响应
     return new NextResponse(fileBuffer, {
       headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="resume.pdf"`,
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="resume_${studentId}${ext || '.pdf'}"`,
       },
     });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getEmailConfig, createOrUpdateEmailConfig } from '@/lib/db/queries';
+import { getCurrentUser } from '@/lib/auth';
 
 /**
  * @swagger
@@ -42,6 +43,10 @@ import { getEmailConfig, createOrUpdateEmailConfig } from '@/lib/db/queries';
  */
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: '请先登录' }, { status: 401 });
+    }
     const config = await getEmailConfig();
     if (!config) {
       return NextResponse.json({
@@ -65,6 +70,10 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: '请先登录' }, { status: 401 });
+    }
     const data = await request.json();
     await createOrUpdateEmailConfig({
       host: data.host || '',

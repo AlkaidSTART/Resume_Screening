@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPlatformSettings, createOrUpdatePlatformSettings } from '@/lib/db/queries';
+import { getCurrentUser } from '@/lib/auth';
 
 /**
  * @swagger
@@ -56,6 +57,10 @@ import { getPlatformSettings, createOrUpdatePlatformSettings } from '@/lib/db/qu
  */
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: '请先登录' }, { status: 401 });
+    }
     const settings = await getPlatformSettings();
     return NextResponse.json(settings);
   } catch (error) {
@@ -66,6 +71,10 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: '请先登录' }, { status: 401 });
+    }
     const data = await request.json();
     await createOrUpdatePlatformSettings(data);
     return NextResponse.json({ success: true });
